@@ -1,33 +1,61 @@
-Litecoin integration/staging tree
+Aidcoins integration/staging tree
 ================================
 
-http://www.litecoin.org
+http://aidcoins.org
 
 Copyright (c) 2009-2014 Bitcoin Developers
 Copyright (c) 2011-2014 Litecoin Developers
+Copyright (c) 2014-2014 Aidcoins Developers
 
-What is Litecoin?
+What are Aidcoins?
 ----------------
 
-Litecoin is a lite version of Bitcoin using scrypt as a proof-of-work algorithm.
+THE SOCIAL DIGITAL COINS
+
+Aidcoins is based on Litecoin, but inovates in the social sector, we like to help
+end poberty on the World!
+
+This ideia born in Portugal em 2014, a contry in economic crisis. This lead to ideias that can help the World to 
+be a better place!
+
+Any coin transfer require a minimum of 2% donation for a registed social 
+solidarity institution anyhere in the World, the "list" of those institutions are public 
+avaible at http://aidcoins.org/list this is the only central managed part of the Aidcoin.
+
+The "list" have 3 field, world location (location), institution name (name) and wallet address (address).
+
+Record example: "Europe/Portugal", "AMI Portugal", "232jdasfas234*************"
+
+The wallet will made updates of that list every day, if the server is offline, the list 
+remains unchanged.
+
+Any donation will only be validated if the destination address is on the "list".
+Any coin transfer betten users will only be validated, if follows a donation tranfer of at least 2% of the value 
+to transfer to a normal user wallet.
+
+This coin is to be used by conscienced people! 
+Poberty proves that Humans failed as a society!
+
+
+Aidcoins is using scrypt as a proof-of-work algorithm.
  - 2.5 minute block targets
  - subsidy halves in 840k blocks (~4 years)
  - ~84 million total coins
 
-The rest is the same as Bitcoin.
+The rest is the same as Litecoin and Bitcoin.
  - 50 coins per block
  - 2016 blocks to retarget difficulty
 
 For more information, as well as an immediately useable, binary version of
-the Litecoin client sofware, see http://www.litecoin.org.
+the Aidcoin client sofware, see http://www.todo-later.org.
 
 License
 -------
 
-Litecoin is released under the terms of the MIT license. See `COPYING` for more
+Aidcoins is released under the terms of the MIT license. See `COPYING` for more
 information or see http://opensource.org/licenses/MIT.
 
-Development process
+Development process ##### rever daqui para baixo.
 -------------------
 
 Developers work in their own trees, then submit pull requests when they think
