@@ -1402,9 +1402,44 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
     return true;
 }
 
+// kreatorpt :: todo: try to join the two operations in only one
+
+ //SendMoneyAid(scriptPubKeyDonation, nDonation, scriptPubKey, nValue, wtxNew, fAskFee);
+string CWallet::SendMoneyAid(CScript scriptPubKeyDonation, int64 nDonation, CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee)
+{
 
 
 
+    CReserveKey reservekey(this);
+    int64 nFeeRequired;
+
+    if (IsLocked())
+    {
+        string strError = _("Error: Wallet locked, unable to create transaction!");
+        printf("SendMoneyAid() : %s", strError.c_str());
+        return strError;
+    }
+    string strError;
+    if (!CreateTransaction(scriptPubKey, nValue, wtxNew, reservekey, nFeeRequired, strError))
+    {
+        if (nDonation + nValue + nFeeRequired > GetBalance())
+            strError = strprintf(_("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!"), FormatMoney(nFeeRequired).c_str());
+        printf("SendMoneyAid() : %s\n", strError.c_str());
+        return strError;
+    }
+
+    if (fAskFee && !uiInterface.ThreadSafeAskFee(nFeeRequired))
+        return "ABORTED";
+		
+	// the problems starts here, someone to help?
+
+    if (!CommitTransaction(wtxNew, reservekey))
+        return _("Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.");
+
+    return "";
+}
+
+// default bitcoin SendMoney
 string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew, bool fAskFee)
 {
     CReserveKey reservekey(this);
@@ -1434,9 +1469,30 @@ string CWallet::SendMoney(CScript scriptPubKey, int64 nValue, CWalletTx& wtxNew,
     return "";
 }
 
+	// kreatorpt: not used for now
+	//SendMoneyToDestinationAid(donationAddress.Get(), nDonationAmount, address.Get(), nAmount, wtx);
+	
+string CWallet::SendMoneyToDestinationAid(const CTxDonationDestination& donationAddress, int64 nDonation, const CTxDestination& address, int64 nValue, CWalletTx& wtxNew, bool fAskFee)
+{
+    // Check amount
+    if (nValue <= 0)
+        return _("Invalid amount");
+    if (nValue + nDonation + nTransactionFee > GetBalance())
+        return _("Insufficient funds");
 
+    // Parse Bitcoin address
+    CScript scriptPubKey;
+    scriptPubKey.SetDestination(address);
+	
+	CScript scriptPubKeyDonation;
+    scriptPubKeyDonation.SetDestination(donationAddress);
+	
+    //return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
+	return SendMoneyAid(scriptPubKeyDonation, nDonation, scriptPubKey, nValue, wtxNew, fAskFee);
+}
 
-string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nValue, CWalletTx& wtxNew, bool fAskFee)
+// kreatorpt not used anymore on AidCoins
+/*string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nValue, CWalletTx& wtxNew, bool fAskFee)
 {
     // Check amount
     if (nValue <= 0)
@@ -1449,7 +1505,7 @@ string CWallet::SendMoneyToDestination(const CTxDestination& address, int64 nVal
     scriptPubKey.SetDestination(address);
 
     return SendMoney(scriptPubKey, nValue, wtxNew, fAskFee);
-}
+}*/
 
 
 

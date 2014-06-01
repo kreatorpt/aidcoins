@@ -102,7 +102,7 @@ Value getnewaddress(const Array& params, bool fHelp)
     if (fHelp || params.size() > 1)
         throw runtime_error(
             "getnewaddress [account]\n"
-            "Returns a new Litecoin address for receiving payments.  "
+            "Returns a new Aidcoins address for receiving payments.  "
             "If [account] is specified (recommended), it is added to the address book "
             "so payments received with the address will be credited to [account].");
 
@@ -169,7 +169,7 @@ Value getaccountaddress(const Array& params, bool fHelp)
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "getaccountaddress <account>\n"
-            "Returns the current Litecoin address for receiving payments to this account.");
+            "Returns the current Aidcoins address for receiving payments to this account.");
 
     // Parse the account first so we don't generate a key if there's an error
     string strAccount = AccountFromValue(params[0]);
@@ -187,12 +187,12 @@ Value setaccount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "setaccount <litecoinaddress> <account>\n"
+            "setaccount <aidcoinsaddress> <account>\n"
             "Sets the account associated with the given address.");
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Litecoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Aidcoins address");
 
 
     string strAccount;
@@ -217,12 +217,12 @@ Value getaccount(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "getaccount <litecoinaddress>\n"
+            "getaccount <aidcoinsaddress>\n"
             "Returns the account associated with the given address.");
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Litecoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Aidcoins address");
 
     string strAccount;
     map<CTxDestination, string>::iterator mi = pwalletMain->mapAddressBook.find(address.Get());
@@ -270,35 +270,62 @@ Value setmininput(const Array& params, bool fHelp)
     return true;
 }
 
-
+// kreatorpt : need review // fromaccount missing, must use default account I guess
+// do the same code adaptation done on sendfrom
 Value sendtoaddress(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 2 || params.size() > 4)
+    if (fHelp || params.size() < 3 || params.size() > 6)
         throw runtime_error(
-            "sendtoaddress <litecoinaddress> <amount> [comment] [comment-to]\n"
+            "sendtoaddress <toaidcoinsaddress> <amount> <donationaddress> [donation=0.02] [comment] [comment-to]\n"
             "<amount> is a real and is rounded to the nearest 0.00000001"
             + HelpRequiringPassphrase());
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Litecoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Aidcoins address");
+		
+	CBitcoinAddress donationAddress(params[2].get_str());
+    if (!address.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Aidcoins address");
 
     // Amount
     int64 nAmount = AmountFromValue(params[1]);
+	
+	// kreatorpt: donation, minimum is 0.02 ( 2% )
+	double donation = 0.02; 
+    if (params.size() > 3)
+        donation = params[3].get_real();
+				
+	Value amount = params[1];
+	double dAmount = amount.get_real();	
+	
+	double dDonationAmount = dAmount * donation;
+	
+	int64 nDonationAmount = AmountFromValue(dDonationAmount); 
+	
+	
+	// kreatorpt :: todo later: need to validate if the donationAddress is valid, listed on the public directory
+	// needed an array or a list to store the directory
+	// HELP NEEDED HERE
+	
 
     // Wallet comments
     CWalletTx wtx;
-    if (params.size() > 2 && params[2].type() != null_type && !params[2].get_str().empty())
-        wtx.mapValue["comment"] = params[2].get_str();
-    if (params.size() > 3 && params[3].type() != null_type && !params[3].get_str().empty())
-        wtx.mapValue["to"]      = params[3].get_str();
-
+    if (params.size() > 4 && params[4].type() != null_type && !params[4].get_str().empty())
+        wtx.mapValue["comment"] = params[4].get_str();
+    if (params.size() > 5 && params[3].type() != null_type && !params[5].get_str().empty())
+        wtx.mapValue["to"]      = params[5].get_str();
+		
+	
     if (pwalletMain->IsLocked())
         throw JSONRPCError(RPC_WALLET_UNLOCK_NEEDED, "Error: Please enter the wallet passphrase with walletpassphrase first.");
 
-    string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, wtx);
+		
+    /*string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, wtx);
     if (strError != "")
-        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);*/
+		
+	sendAid(donationAddress, nDonationAmount, address, nAmount, wtx);
 
     return wtx.GetHash().GetHex();
 }
@@ -338,7 +365,7 @@ Value signmessage(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 2)
         throw runtime_error(
-            "signmessage <litecoinaddress> <message>\n"
+            "signmessage <aidcoinsaddress> <message>\n"
             "Sign a message with the private key of an address");
 
     EnsureWalletIsUnlocked();
@@ -373,7 +400,7 @@ Value verifymessage(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
         throw runtime_error(
-            "verifymessage <litecoinaddress> <signature> <message>\n"
+            "verifymessage <aidcoinsaddress> <signature> <message>\n"
             "Verify a signed message");
 
     string strAddress  = params[0].get_str();
@@ -410,14 +437,14 @@ Value getreceivedbyaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "getreceivedbyaddress <litecoinaddress> [minconf=1]\n"
-            "Returns the total amount received by <litecoinaddress> in transactions with at least [minconf] confirmations.");
+            "getreceivedbyaddress <aidcoinsaddress> [minconf=1]\n"
+            "Returns the total amount received by <aidcoinsaddress> in transactions with at least [minconf] confirmations.");
 
     // Bitcoin address
     CBitcoinAddress address = CBitcoinAddress(params[0].get_str());
     CScript scriptPubKey;
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Litecoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Aidcoins address");
     scriptPubKey.SetDestination(address.Get());
     if (!IsMine(*pwalletMain,scriptPubKey))
         return (double)0.0;
@@ -629,45 +656,158 @@ Value movecmd(const Array& params, bool fHelp)
 
 Value sendfrom(const Array& params, bool fHelp)
 {
-    if (fHelp || params.size() < 3 || params.size() > 6)
+    if (fHelp || params.size() < 4 || params.size() > 8)
         throw runtime_error(
-            "sendfrom <fromaccount> <tolitecoinaddress> <amount> [minconf=1] [comment] [comment-to]\n"
+            "sendfrom <fromaccount> <toaidcoinsaddress> <amount> <donationaddress> [donation=0.02] [minconf=1] [comment] [comment-to]\n"
             "<amount> is a real and is rounded to the nearest 0.00000001"
             + HelpRequiringPassphrase());
 
     string strAccount = AccountFromValue(params[0]);
     CBitcoinAddress address(params[1].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Litecoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Aidcoins address");
+		
+	CBitcoinAddress donationAddress(params[3].get_str());
+    if (!address.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Aidcoins address");
+		
     int64 nAmount = AmountFromValue(params[2]);
+	
+	
+	// kreatorpt: donation, minimum is 0.02 ( 2% )
+	double donation = 0.02; 
+    if (params.size() > 4)
+        donation = params[4].get_real();
+				
+	Value amount = params[2];
+	double dAmount = amount.get_real();	
+	
+	double dDonationAmount = dAmount * donation;
+	
+	int64 nDonationAmount = AmountFromValue(dDonationAmount); 
+	
+		
     int nMinDepth = 1;
-    if (params.size() > 3)
-        nMinDepth = params[3].get_int();
+    if (params.size() > 5)
+        nMinDepth = params[5].get_int();
 
     CWalletTx wtx;
     wtx.strFromAccount = strAccount;
-    if (params.size() > 4 && params[4].type() != null_type && !params[4].get_str().empty())
+    if (params.size() > 6 && params[6].type() != null_type && !params[6].get_str().empty())
         wtx.mapValue["comment"] = params[4].get_str();
-    if (params.size() > 5 && params[5].type() != null_type && !params[5].get_str().empty())
+    if (params.size() > 7 && params[7].type() != null_type && !params[7].get_str().empty())
         wtx.mapValue["to"]      = params[5].get_str();
 
     EnsureWalletIsUnlocked();
 
     // Check funds
     int64 nBalance = GetAccountBalance(strAccount, nMinDepth);
-    if (nAmount > nBalance)
+    if ((nAmount + nDonationAmount) > nBalance)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
 
+	// Send Donation first
+	// kreatorpt :: todo later: need to validate if the donationAddress is valid, listed on the public directory
+	// needed an array or a list to store the directory
+	// HELP NEEDED HERE
+	
+
+/*	
+    string strErrorDonation = pwalletMain->SendMoneyToDestination(donationAddress.Get(), nDonationAmount, wtx);
+    if (strErrorDonation != "")
+        throw JSONRPCError(RPC_WALLET_ERROR, strErrorDonation);		
+		
     // Send
     string strError = pwalletMain->SendMoneyToDestination(address.Get(), nAmount, wtx);
     if (strError != "")
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
+		*/
+
+	// all in one transaction; to implement later. anyone can help?
+	/*
+    string strError = pwalletMain->SendMoneyToDestinationAid(donationAddress.Get(), nDonationAmount, address.Get(), nAmount, wtx);
+    if (strError != "")
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+	*/
+
+	
+	sendAid(donationAddress, nDonationAmount, address, nAmount, wtx);
 
     return wtx.GetHash().GetHex();
 }
 
+//bool sendmany(const Array& params, bool fHelp) // based on sendmany
+bool sendAid(CBitcoinAddress donationAddress, int64 nDonationAmount, CBitcoinAddress userAddress, int64 nUserAmount, CWalletTx& wtx);
+{
+    
+	
+   // Object sendTo = params[1].get_obj();
+    
+  
 
-Value sendmany(const Array& params, bool fHelp)
+    set<CBitcoinAddress> setAddress;
+    vector<pair<CScript, int64> > vecSend;
+
+    
+  //  BOOST_FOREACH(const Pair& s, sendTo)
+    //{
+      /*  CBitcoinAddress address(s.name_);
+        if (!address.IsValid())
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Aidcoins address: ")+s.name_);
+
+        if (setAddress.count(address))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+s.name_);
+			
+        setAddress.insert(address);
+
+        CScript scriptPubKey;
+        scriptPubKey.SetDestination(address.Get());
+        int64 nAmount = AmountFromValue(s.value_);
+        totalAmount += nAmount;
+
+        vecSend.push_back(make_pair(scriptPubKey, nAmount));*/
+   // }
+   
+   // donation // aid destination	
+	
+		
+	setAddress.insert(donationAddress);
+
+	CScript scriptPubKeyDonation;
+	scriptPubKey.SetDestination(donationAddress.Get());
+	vecSend.push_back(make_pair(scriptPubKeyDonation, nDonationAmount));
+	
+	// user transfer, coin destination
+	
+	//if (setAddress.count(userAddress))
+//		throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+s.name_);
+	// it is ok to be duplicated, for direct donation, or double donations, when the userAddress is already the social institution
+
+		
+	setAddress.insert(userAddress);
+	CScript scriptPubKey;
+	scriptPubKey.SetDestination(userAddress.Get());
+	vecSend.push_back(make_pair(scriptPubKey, nUserAmount));
+
+    
+    // Send
+    CReserveKey keyChange(pwalletMain);
+    int64 nFeeRequired = 0;
+    string strFailReason;
+    bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, strFailReason);
+    if (!fCreated)
+        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
+    if (!pwalletMain->CommitTransaction(wtx, keyChange))
+        throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
+
+    return true; // all ok here
+}
+
+
+// kreatorpt: temp solution is to disable this sendmany RPC function, do not suport this in AidCoins
+// in this code can be the solution to donation plus transfer in one wallet transaction
+// it seams ok to replace the foreach by the two operations
+
+/*Value sendmany(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 2 || params.size() > 4)
         throw runtime_error(
@@ -694,10 +834,11 @@ Value sendmany(const Array& params, bool fHelp)
     {
         CBitcoinAddress address(s.name_);
         if (!address.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Litecoin address: ")+s.name_);
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Aidcoins address: ")+s.name_);
 
         if (setAddress.count(address))
             throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+s.name_);
+			
         setAddress.insert(address);
 
         CScript scriptPubKey;
@@ -726,7 +867,7 @@ Value sendmany(const Array& params, bool fHelp)
         throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
 
     return wtx.GetHash().GetHex();
-}
+} */
 
 //
 // Used by addmultisigaddress / createmultisig:
@@ -749,7 +890,7 @@ static CScript _createmultisig(const Array& params)
     {
         const std::string& ks = keys[i].get_str();
 
-        // Case 1: Litecoin address and we have full public key:
+        // Case 1: Aidcoins address and we have full public key:
         CBitcoinAddress address(ks);
         if (pwalletMain && address.IsValid())
         {
@@ -790,7 +931,7 @@ Value addmultisigaddress(const Array& params, bool fHelp)
     {
         string msg = "addmultisigaddress <nrequired> <'[\"key\",\"key\"]'> [account]\n"
             "Add a nrequired-to-sign multisignature address to the wallet\"\n"
-            "each key is a Litecoin address or hex-encoded public key\n"
+            "each key is a Aidcoins address or hex-encoded public key\n"
             "If [account] is specified, assign address to [account].";
         throw runtime_error(msg);
     }
@@ -815,7 +956,7 @@ Value createmultisig(const Array& params, bool fHelp)
         string msg = "createmultisig <nrequired> <'[\"key\",\"key\"]'>\n"
             "Creates a multi-signature address and returns a json object\n"
             "with keys:\n"
-            "address : litecoin address\n"
+            "address : aidcoins address\n"
             "redeemScript : hex-encoded redemption script";
         throw runtime_error(msg);
     }
@@ -1479,7 +1620,7 @@ Value encryptwallet(const Array& params, bool fHelp)
     // slack space in .dat files; that is bad if the old data is
     // unencrypted private keys. So:
     StartShutdown();
-    return "wallet encrypted; Litecoin server stopping, restart to run with encrypted wallet. The keypool has been flushed, you need to make a new backup.";
+    return "wallet encrypted; Aidcoins server stopping, restart to run with encrypted wallet. The keypool has been flushed, you need to make a new backup.";
 }
 
 class DescribeAddressVisitor : public boost::static_visitor<Object>
@@ -1521,8 +1662,8 @@ Value validateaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "validateaddress <litecoinaddress>\n"
-            "Return information about <litecoinaddress>.");
+            "validateaddress <aidcoinsaddress>\n"
+            "Return information about <aidcoinsaddress>.");
 
     CBitcoinAddress address(params[0].get_str());
     bool isValid = address.IsValid();
