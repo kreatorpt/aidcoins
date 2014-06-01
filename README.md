@@ -43,7 +43,7 @@ Aidcoins is using scrypt as a proof-of-work algorithm.
  - ~84 million total coins
 
 The rest is the same as Aidcoins and Bitcoin.
- - 50 coins per block
+ - 200 coins per block
  - 2016 blocks to retarget difficulty
 
 For more information, as well as an immediately useable, binary version of
