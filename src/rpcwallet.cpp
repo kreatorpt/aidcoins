@@ -293,8 +293,10 @@ Value sendtoaddress(const Array& params, bool fHelp)
 	
 	// kreatorpt: donation, minimum is 0.02 ( 2% )
 	double donation = 0.02; 
-    if (params.size() > 3)
-        donation = params[3].get_real();
+	
+    if (params.size() > 3) donation = params[3].get_real();
+		
+	if (donation < 0.02) donation = 0.02; // minimum donation allowed rule
 				
 	Value amount = params[1];
 	double dAmount = amount.get_real();	
@@ -675,9 +677,9 @@ Value sendfrom(const Array& params, bool fHelp)
 	
 	
 	// kreatorpt: donation, minimum is 0.02 ( 2% )
-	double donation = 0.02; 
-    if (params.size() > 4)
-        donation = params[4].get_real();
+	double donation = 0.02; 	
+    if (params.size() > 4) donation = params[4].get_real();		
+	if (donation < 0.02) donation = 0.02; // minimum donation allowed rule
 				
 	Value amount = params[2];
 	double dAmount = amount.get_real();	

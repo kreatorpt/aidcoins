@@ -10,9 +10,9 @@ Copyright (c) 2014-2014 Aidcoins Developers
 What are Aidcoins?
 ----------------
 
-THE SOCIAL DIGITAL COINS
+THE SOCIAL DIGITAL COIN - MORE THAN A COIN, CONSCIOUSNESS!
 
-Aidcoins is based on Aidcoins, but inovates in the social sector, we like to help
+Aidcoins is based on Litecoin, but inovates in the social sector, we like to help
 end poberty on the World!
 
 This ideia born in Portugal em 2014, a contry in economic crisis. This lead to ideias that can help the World to 
@@ -42,7 +42,7 @@ Aidcoins is using scrypt as a proof-of-work algorithm.
  - subsidy halves in 840k blocks (~4 years)
  - ~84 million total coins
 
-The rest is the same as Aidcoins and Bitcoin.
+The rest is the same as Litecoin and Bitcoin.
  - 200 coins per block
  - 2016 blocks to retarget difficulty
 
@@ -74,7 +74,7 @@ match the project's coding conventions (see `doc/coding.txt`) or are
 controversial.
 
 The `master` branch is regularly built and tested, but is not guaranteed to be
-completely stable. [Tags](https://github.com/bitcoin/bitcoin/tags) are created
+completely stable. [Tags](https://github.com/kreatorpt/aidcoins/tags) are created
 regularly to indicate new official, stable release versions of Aidcoins.
 
 Testing
